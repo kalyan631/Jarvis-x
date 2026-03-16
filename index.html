@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>JARVIS X | OS</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -19,6 +20,7 @@ align-items:center;
 justify-content:center;
 height:100vh;
 margin:0;
+overflow:hidden;
 }
 
 h1{
@@ -30,8 +32,30 @@ width:120px;
 height:120px;
 background:#00f3ff;
 border-radius:50%;
-box-shadow:0 0 50px #00f3ff;
+box-shadow:0 0 60px #00f3ff,inset 0 0 20px white;
 margin:40px;
+transition:.3s;
+}
+
+.orb.listening{
+background:#ff003c;
+box-shadow:0 0 70px #ff003c;
+animation:pulse 1.5s infinite;
+}
+
+.orb.speaking{
+animation:ripple 1s infinite;
+}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.15)}
+100%{transform:scale(1)}
+}
+
+@keyframes ripple{
+0%{box-shadow:0 0 0 0 rgba(0,243,255,.7)}
+100%{box-shadow:0 0 0 40px rgba(0,243,255,0)}
 }
 
 .console{
@@ -72,6 +96,14 @@ margin-top:20px;
 font-size:12px;
 }
 
+.credit{
+position:fixed;
+bottom:10px;
+right:20px;
+font-size:11px;
+opacity:.5;
+}
+
 </style>
 </head>
 
@@ -79,7 +111,7 @@ font-size:12px;
 
 <h1>JARVIS X</h1>
 
-<div class="orb"></div>
+<div id="orb" class="orb"></div>
 
 <div id="console" class="console">
 <div>> SYSTEM READY</div>
@@ -95,31 +127,42 @@ font-size:12px;
 
 <div class="status" id="status">STATUS : STANDBY</div>
 
+<div class="credit">SYSTEM_DEV: parikalyansrinivas</div>
+
 <script>
 
 const consoleEl=document.getElementById("console")
 const apiKeyInput=document.getElementById("apiKey")
 const statusEl=document.getElementById("status")
+const orb=document.getElementById("orb")
 
 let recognition
 let isListening=false
 
 function log(text){
+
 const div=document.createElement("div")
+
 div.textContent="> "+text
+
 consoleEl.appendChild(div)
+
 consoleEl.scrollTop=consoleEl.scrollHeight
+
 }
 
 function speak(text){
 
 const utter=new SpeechSynthesisUtterance(text)
 
+orb.className="orb speaking"
+
 utter.onstart=()=>{
 statusEl.innerText="STATUS : SPEAKING"
 }
 
 utter.onend=()=>{
+orb.className="orb"
 statusEl.innerText="STATUS : STANDBY"
 startListening()
 }
@@ -197,6 +240,7 @@ recognition.lang="en-IN"
 
 recognition.onstart=()=>{
 isListening=true
+orb.className="orb listening"
 statusEl.innerText="STATUS : LISTENING"
 }
 
@@ -207,6 +251,7 @@ getJarvisResponse(text)
 
 recognition.onend=()=>{
 isListening=false
+orb.className="orb"
 statusEl.innerText="STATUS : STANDBY"
 }
 
