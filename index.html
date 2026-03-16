@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JARVIS X | OS</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -27,6 +25,8 @@ overflow:hidden;
 h1{
 letter-spacing:10px;
 }
+
+/* ORB SYSTEM */
 
 .orb-container{
 position:relative;
@@ -68,7 +68,7 @@ border:2px solid #00f3ff;
 width:150px;
 height:150px;
 opacity:.5;
-animation:rotate 6s linear infinite;
+animation:spin 6s linear infinite;
 }
 
 .ring2{
@@ -76,15 +76,15 @@ width:180px;
 height:180px;
 border-style:dashed;
 opacity:.3;
-animation:rotateReverse 10s linear infinite;
+animation:spinReverse 10s linear infinite;
 }
 
-@keyframes rotate{
+@keyframes spin{
 from{transform:rotate(0deg)}
 to{transform:rotate(360deg)}
 }
 
-@keyframes rotateReverse{
+@keyframes spinReverse{
 from{transform:rotate(360deg)}
 to{transform:rotate(0deg)}
 }
@@ -100,6 +100,8 @@ to{transform:rotate(0deg)}
 100%{box-shadow:0 0 0 40px rgba(0,243,255,0)}
 }
 
+/* CONSOLE */
+
 .console{
 width:90%;
 max-width:700px;
@@ -109,6 +111,8 @@ padding:10px;
 overflow:auto;
 background:black;
 }
+
+/* INPUT */
 
 .controls{
 margin-top:20px;
@@ -133,17 +137,21 @@ padding:10px 20px;
 cursor:pointer;
 }
 
+/* STATUS */
+
 .status{
 margin-top:20px;
 font-size:12px;
 }
+
+/* CREDIT */
 
 .credit{
 position:fixed;
 bottom:10px;
 right:20px;
 font-size:11px;
-opacity:.5;
+opacity:.6;
 }
 
 </style>
