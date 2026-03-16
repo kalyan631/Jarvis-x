@@ -28,11 +28,6 @@ display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
-background-image:
-radial-gradient(circle at 50% 50%,#111 0%,#000 100%),
-linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),
-linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));
-background-size:100% 100%,100% 2px,3px 100%;
 }
 
 #ui-container{
@@ -43,7 +38,6 @@ display:flex;
 flex-direction:column;
 align-items:center;
 gap:2rem;
-z-index:10;
 }
 
 .orb-container{
@@ -61,18 +55,11 @@ height:120px;
 background:var(--primary);
 border-radius:50%;
 box-shadow:0 0 50px var(--primary), inset 0 0 20px #fff;
-position:relative;
-transition:all .3s;
 }
 
 .orb.listening{
 animation:pulse 1.5s infinite;
 background:var(--danger);
-box-shadow:0 0 60px var(--danger);
-}
-
-.orb.speaking{
-animation:ripple .8s infinite;
 }
 
 @keyframes pulse{
@@ -81,55 +68,29 @@ animation:ripple .8s infinite;
 100%{transform:scale(1)}
 }
 
-@keyframes ripple{
-0%{box-shadow:0 0 0 0 rgba(0,243,255,.7)}
-100%{box-shadow:0 0 0 40px rgba(0,243,255,0)}
-}
-
-.ring{
-position:absolute;
-border:2px solid var(--primary);
-border-radius:50%;
-opacity:.3;
-animation:rotate 10s linear infinite;
-}
-
-.ring-1{width:180px;height:180px;border-style:dashed}
-.ring-2{width:220px;height:220px;border-style:double;animation-direction:reverse}
-
-@keyframes rotate{
-from{transform:rotate(0)}
-to{transform:rotate(360deg)}
-}
-
 #console{
 width:90%;
 height:150px;
-background:rgba(0,0,0,.8);
+background:rgba(0,0,0,0.8);
 border:1px solid var(--primary);
 padding:15px;
 overflow-y:auto;
-text-transform:uppercase;
-font-size:.9rem;
-box-shadow:0 0 15px var(--glow);
+font-size:0.9rem;
 }
-
-.line{margin-bottom:5px}
-.line span{color:#fff}
 
 .controls{
 display:flex;
-gap:15px;
+gap:10px;
 width:90%;
 }
 
-input{
+input,select{
 flex:1;
 background:transparent;
 border:1px solid var(--primary);
 padding:10px;
 color:var(--primary);
-font-family:'Share Tech Mono';
+font-family:'Share Tech Mono',monospace;
 }
 
 button{
@@ -142,16 +103,15 @@ font-weight:bold;
 }
 
 .status{
-font-size:.7rem;
-letter-spacing:2px;
+font-size:0.8rem;
 }
 
 .credits{
 position:fixed;
 bottom:10px;
 right:15px;
-font-size:.7rem;
-opacity:.5;
+font-size:0.7rem;
+opacity:0.5;
 }
 
 </style>
@@ -164,20 +124,26 @@ opacity:.5;
 <h1 style="letter-spacing:10px;">JARVIS X</h1>
 
 <div class="orb-container">
-<div class="ring ring-1"></div>
-<div class="ring ring-2"></div>
 <div id="visualizer" class="orb"></div>
 </div>
 
 <div id="console">
-<div class="line">> INITIALIZING SYSTEM...</div>
-<div class="line">> ENCRYPTED CHANNEL ESTABLISHED.</div>
-<div class="line">> READY FOR COMMANDS.</div>
+<div>> INITIALIZING SYSTEM...</div>
+<div>> READY FOR COMMANDS</div>
 </div>
 
 <div class="controls">
+
 <input type="password" id="apiKey" placeholder="ENTER OPENROUTER API KEY">
+
+<select id="modelSelect">
+<option value="google/gemini-2.0-flash-lite-preview-02-05:free">Gemini Flash</option>
+<option value="meta-llama/llama-3-8b-instruct:free">Llama 3</option>
+<option value="mistralai/mistral-7b-instruct:free">Mistral</option>
+</select>
+
 <button onclick="toggleListening()">ACTIVATE VOICE</button>
+
 </div>
 
 <div class="status" id="status">STATUS: STANDBY</div>
@@ -188,74 +154,50 @@ opacity:.5;
 
 <script>
 
-const consoleEl=document.getElementById('console');
-const visualizer=document.getElementById('visualizer');
-const statusEl=document.getElementById('status');
-const apiKeyInput=document.getElementById('apiKey');
+const consoleEl=document.getElementById('console')
+const visualizer=document.getElementById('visualizer')
+const statusEl=document.getElementById('status')
+const apiKeyInput=document.getElementById('apiKey')
+const modelSelect=document.getElementById('modelSelect')
 
-let recognition;
-let isListening=false;
-let synthesis=window.speechSynthesis;
+let recognition
+let isListening=false
+let synthesis=window.speechSynthesis
 
-const SYSTEM_PROMPT=`You are Jarvis X.
-Speak naturally like a friendly female assistant.
-Developed by parikalyansrinivas.
-Powered by OpenRouter.`;
-
-/* FEMALE VOICE */
-
-function getBestVoice(){
-
-const voices=synthesis.getVoices();
-
-const female=voices.find(v=>
-
-v.lang.startsWith('en') &&
-
-(v.name.toLowerCase().includes('female') ||
-v.name.toLowerCase().includes('zira') ||
-v.name.toLowerCase().includes('susan'))
-
-);
-
-return female || voices[0];
-
+function log(msg){
+const line=document.createElement("div")
+line.innerHTML="> "+msg
+consoleEl.appendChild(line)
+consoleEl.scrollTop=consoleEl.scrollHeight
 }
-
-/* SPEAK */
 
 function speak(text){
 
-synthesis.cancel();
+const utter=new SpeechSynthesisUtterance(text)
 
-visualizer.className='orb speaking';
-
-const utter=new SpeechSynthesisUtterance(text);
-
-utter.voice=getBestVoice();
-
-utter.onend=()=>{
-visualizer.className='orb';
-statusEl.innerText='STATUS: STANDBY';
-startListening();
-};
-
-synthesis.speak(utter);
-
+utter.onstart=()=>{
+statusEl.innerText="STATUS: SPEAKING"
 }
 
-/* OPENROUTER AI */
+utter.onend=()=>{
+statusEl.innerText="STATUS: STANDBY"
+startListening()
+}
+
+synthesis.speak(utter)
+
+}
 
 async function getJarvisResponse(userText){
 
-const key=apiKeyInput.value;
+const key=apiKeyInput.value
 
 if(!key){
-speak("Please enter API key.");
-return;
+speak("Please enter API key")
+return
 }
 
-logToConsole("USER: "+userText);
+log("USER: "+userText)
 
 try{
 
@@ -272,103 +214,81 @@ headers:{
 
 body:JSON.stringify({
 
-model:"meta-llama/llama-3-8b-instruct:free",
+model:modelSelect.value,
 
 messages:[
-{role:"system",content:SYSTEM_PROMPT},
+{role:"system",content:"You are Jarvis X AI assistant. Speak naturally."},
 {role:"user",content:userText}
 ]
 
 })
 
-});
+})
 
-const data=await response.json();
+const data=await response.json()
 
-let aiText="I couldn't understand.";
+let aiText="No response from AI"
 
 if(data.choices && data.choices.length>0){
-aiText=data.choices[0].message.content;
+aiText=data.choices[0].message.content
 }
 
-logToConsole("JARVIS: "+aiText);
+log("JARVIS: "+aiText)
 
-speak(aiText);
+speak(aiText)
 
-}catch(e){
+}catch(err){
 
-logToConsole("NETWORK ERROR");
-
-speak("Connection problem.");
-
-}
+log("SYSTEM ERROR")
+speak("Connection problem")
 
 }
 
-/* SPEECH RECOGNITION */
+}
 
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition
 
 if(SpeechRecognition){
 
-recognition=new SpeechRecognition();
+recognition=new SpeechRecognition()
 
-recognition.lang="en-IN";
+recognition.lang="en-IN"
 
 recognition.onstart=()=>{
-isListening=true;
-visualizer.className='orb listening';
-statusEl.innerText='STATUS: LISTENING...';
-};
-
-recognition.onresult=(event)=>{
-const text=event.results[0][0].transcript;
-getJarvisResponse(text);
-};
-
-recognition.onend=()=>{
-isListening=false;
-visualizer.className='orb';
-statusEl.innerText='STATUS: STANDBY';
-};
-
+isListening=true
+visualizer.classList.add("listening")
+statusEl.innerText="STATUS: LISTENING"
 }
 
-/* CONTROLS */
+recognition.onresult=(event)=>{
+const text=event.results[0][0].transcript
+getJarvisResponse(text)
+}
+
+recognition.onend=()=>{
+isListening=false
+visualizer.classList.remove("listening")
+}
+
+}
 
 function toggleListening(){
 
 if(isListening){
-recognition.stop();
+recognition.stop()
 }else{
-startListening();
+startListening()
 }
 
 }
 
 function startListening(){
 
-if(recognition && !isListening){
-recognition.start();
+if(recognition){
+recognition.start()
 }
 
 }
-
-function logToConsole(msg){
-
-const line=document.createElement('div');
-
-line.className='line';
-
-line.innerHTML=`> <span>${msg}</span>`;
-
-consoleEl.appendChild(line);
-
-consoleEl.scrollTop=consoleEl.scrollHeight;
-
-}
-
-window.speechSynthesis.onvoiceschanged=()=>getBestVoice();
 
 </script>
 
